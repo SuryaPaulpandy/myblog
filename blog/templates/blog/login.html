@@ -1,0 +1,54 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row d-flex justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#password-login" data-bs-toggle="tab">Password Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#email-login" data-bs-toggle="tab">Email OTP Login</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="password-login">
+                            <h3>Login with Password</h3>
+                            <div>
+                                {% include 'blog/includes/errors.html' %}
+                            </div>
+                            <div class="my-3">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="username" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="username" name="username" value="{{ form.username.value|default:'' }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="password" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="password" name="password">
+                                    </div>
+                                    <div class="my-3 d-flex justify-content-between">
+                                        <a href="{% url 'blog:forgot_password' %}">Forgot Password?</a>
+                                        <button type="submit" class="btn btn-primary">Login</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="email-login">
+                            <h3>Login with Email OTP</h3>
+                            <p>We'll send a one-time password to your email</p>
+                            <a href="{% url 'blog:email_login' %}" class="btn btn-primary">Continue with Email</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

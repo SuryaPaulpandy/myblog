@@ -1,0 +1,12 @@
+{% autoescape off %}
+Hello,
+
+Your OTP verification code is: {{ otp }}
+
+This code will expire in 3 minutes (at {{ expiry_time }}).
+
+If you didn't request this, please ignore this email.
+
+Thank you,
+{{ site_name }} Team
+{% endautoescape %}

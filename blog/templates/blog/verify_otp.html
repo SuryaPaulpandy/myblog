@@ -1,0 +1,86 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>Verify OTP</h4>
+                </div>
+                <div class="card-body">
+                    <p>We've sent a 6-digit code to <strong>{{ email }}</strong></p>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-clock"></i> 
+                        <span id="countdown">03:00</span> remaining
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-danger">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="otp-form">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary w-100 mb-3">Verify</button>
+                    </form>
+                    
+                    <div class="text-center">
+                        <button id="resend-btn" class="btn btn-link">Resend OTP</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const expiryTime = new Date("{{ otp_expiry }}").getTime();
+    const countdown = document.getElementById('countdown');
+    const resendBtn = document.getElementById('resend-btn');
+    
+    function updateTimer() {
+        const now = new Date().getTime();
+        const distance = expiryTime - now;
+        
+        if (distance <= 0) {
+            countdown.textContent = 'EXPIRED';
+            document.querySelector('.alert-info').className = 'alert alert-danger';
+            return;
+        }
+        
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        setTimeout(updateTimer, 1000);
+    }
+    
+    updateTimer();
+    
+    resendBtn.addEventListener('click', function() {
+        fetch("{% url 'blog:resend_otp' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('New OTP sent successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

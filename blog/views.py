@@ -1,0 +1,540 @@
+"""Django Views for Blog App"""
+
+import logging
+import random
+from datetime import timedelta, datetime
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import Group, User
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.core.paginator import Paginator
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+
+
+from django.utils import timezone
+from .forms import LoginForm, EmailLoginForm, OTPVerificationForm
+
+
+from datetime import datetime, timedelta
+
+
+logger = logging.getLogger(__name__)
+
+from django.contrib.auth import get_user_model
+
+
+from .forms import (
+    ForgotPasswordForm,
+    PostForm,
+    RegisterForm,
+    ResetPasswordForm,
+    LoginForm,
+    EmailLoginForm,
+    OTPVerificationForm,
+)
+from .models import AboutUs, Category, Post
+
+
+def index(request):
+    """Display all blog posts on the index page."""
+    blog_title = "Latest Posts"
+    all_posts = Post.objects.filter(is_published=True)
+    paginator = Paginator(all_posts, 5)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    return render(
+        request, "blog/index.html", {"blog_title": blog_title, "page_obj": page_obj}
+    )
+
+
+def detail(request, slug):
+    """Display the detail page of a specific blog post using the slug."""
+
+    if request.user and not request.user.has_perm("blog.view_post"):
+        messages.error(request, "You have no permission to view any posts")
+        return redirect("blog:index")
+    post = get_object_or_404(Post, slug=slug)
+    related_posts = Post.objects.filter(category=post.category).exclude(pk=post.id)
+    return render(
+        request, "blog/detail.html", {"post": post, "related_posts": related_posts}
+    )
+
+
+def old_url_redirect(request):
+    """Redirect from an old URL to the new detail page."""
+    return redirect(reverse("blog:new_page_url"))
+
+
+def new_url_view(request):
+    """Display a simple message for the new URL."""
+    return HttpResponse("This is the new URL.")
+
+
+def contact(request):
+    """Handle contact form submission and send email to the client."""
+
+    if request.method == "POST":
+
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        message = request.POST.get("message")
+
+        logger = logging.getLogger("TESTING")
+        logger.debug(
+            "Received POST data: Name: %s, Email: %s, Message: %s", name, email, message
+        )
+
+        if name and email and message:
+
+            full_message = f"""You have a new contact form submission:
+
+            Name: {name}
+            Email: {email}
+            Message:
+            {message}
+            """
+
+            send_mail(
+                subject=f"Contact Form Submission from {name}",
+                message=full_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],
+            )
+
+            success_message = "Your Email has been sent!"
+            return render(
+                request,
+                "blog/contact.html",
+                {
+                    "success_message": success_message,
+                    # "name": name,
+                    # "email": email,
+                    # "message": message,
+                },
+            )
+
+        else:
+
+            error_message = "All fields are required."
+            return render(
+                request,
+                "blog/contact.html",
+                {
+                    "error_message": error_message,
+                    "name": name,
+                    "email": email,
+                    "message": message,
+                },
+            )
+
+    return render(request, "blog/contact.html")
+
+
+def about(request):
+    """To Get a About Page"""
+    about_content = AboutUs.objects.first()
+    if about_content is None or not about_content.content:
+        about_content = "Default content goes here."
+    else:
+        about_content = about_content.content
+
+    return render(request, "blog/about.html", {"about_content": about_content})
+
+
+def register(request):
+    """To get a register page"""
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data["password"])
+            user.save()
+
+            readers_group, created = Group.objects.get_or_create(name="Readers")
+            user.groups.add(readers_group)
+
+            messages.success(request, "Registration successful! You can now log in.")
+            return redirect("blog:login")
+    else:
+        form = RegisterForm()
+    return render(request, "blog/register.html", {"form": form})
+
+
+User = get_user_model()
+
+
+# def login(request):
+#     """Existing password login"""
+#     if request.method == "POST":
+#         form = LoginForm(request.POST)
+#         if form.is_valid():
+#             username = form.cleaned_data["username"]
+#             password = form.cleaned_data["password"]
+#             user = authenticate(username=username, password=password)
+#             if user is not None:
+#                 auth_login(request, user)
+#                 return redirect("blog:dashboard")
+#             else:
+#                 messages.error(request, "Invalid username or password")
+#     else:
+#         form = LoginForm()
+#     return render(request, "blog/login.html", {"form": form})
+
+
+def dashboard(request):
+    """To get a dashboard page"""
+    blog_title = "My Posts"
+
+    username = request.session.get("username", "Guest")
+    is_logged_in = request.session.get("is_logged_in", False)
+
+    all_posts = Post.objects.filter(user=request.user)
+
+    paginator = Paginator(all_posts, 5)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "blog/dashboard.html",
+        {
+            "blog_title": blog_title,
+            "page_obj": page_obj,
+            "username": username,
+            "is_logged_in": is_logged_in,
+        },
+    )
+
+
+def logout(request):
+    """To get a logout page"""
+    auth_logout(request)
+    request.session.flush()
+    return redirect("blog:index")
+
+
+User = get_user_model()
+
+
+def forgot_password(request):
+    """Handle forgot password requests with improved error handling"""
+    if request.method == "POST":
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data["email"]
+            try:
+                user = User.objects.get(email=email)
+
+                # Generate token and uid
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                # Get current site domain
+                current_site = get_current_site(request)
+                domain = current_site.domain
+
+                # Save reset info in session
+                request.session["reset_start_time"] = timezone.now().isoformat()
+                request.session["reset_user_id"] = user.pk
+                request.session["reset_email"] = email  # Store email for verification
+
+                # Prepare email
+                subject = "Password Reset Request"
+                message = render_to_string(
+                    "blog/reset_password_email.html",
+                    {
+                        "user": user,
+                        "domain": domain,
+                        "uid": uid,
+                        "token": token,
+                    },
+                )
+
+                # Send email
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,  # Use from settings
+                    [email],
+                    fail_silently=False,
+                )
+
+                messages.success(
+                    request, "Password reset link has been sent to your email."
+                )
+                return redirect("blog:login")
+
+            except User.DoesNotExist:
+                # This shouldn't happen due to form validation, but just in case
+                messages.error(request, "No user found with this email address.")
+            except Exception as e:
+                logger.error(f"Error sending password reset email: {str(e)}")
+                messages.error(
+                    request,
+                    "An error occurred while sending the reset email. Please try again later.",
+                )
+    else:
+        form = ForgotPasswordForm()
+
+    return render(request, "blog/forgot_password.html", {"form": form})
+
+
+def reset_password(request, uidb64, token):
+    """To get a rest_password page views"""
+    form = ResetPasswordForm()
+
+    #  Check if 5 minutes passed
+    reset_time = request.session.get("reset_start_time")
+    if reset_time:
+        reset_time = timezone.datetime.fromisoformat(reset_time)
+        now = timezone.now()
+
+        if now - reset_time > timedelta(minutes=5):
+            messages.error(request, "Reset link has expired. Please request a new one.")
+            return redirect("blog:forgot_password")
+
+    if request.method == "POST":
+
+        # If session expired, redirect
+        if not request.session.exists(request.session.session_key):
+            messages.error(request, "Session expired. Please try again.")
+            return redirect("blog:forgot_password")
+
+        # form
+        form = ResetPasswordForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data["new_password"]
+            try:
+                uid = urlsafe_base64_decode(uidb64)
+                user = User.objects.get(pk=uid)
+            except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+                user = None
+
+            if user is not None and default_token_generator.check_token(user, token):
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, "Your password has been reset successfully!")
+                request.session.pop("reset_password_active", None)  # clear session key
+                return redirect("blog:login")
+            else:
+                messages.error(request, "The password reset link is invalid")
+
+    return render(request, "blog/reset_password.html", {"form": form})
+
+
+@login_required
+@permission_required("blog.add_post", raise_exception=True)
+def new_post(request):
+    """To get a new_post page"""
+    categories = Category.objects.all()
+    form = PostForm()
+    if request.method == "POST":
+        # form
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user
+            post.save()
+            return redirect("blog:dashboard")
+    return render(
+        request, "blog/new_post.html", {"categories": categories, "form": form}
+    )
+
+
+@login_required
+@permission_required("blog.change_post", raise_exception=True)
+def edit_post(request, post_id):
+    """To get aedit_post views"""
+    categories = Category.objects.all()
+    post = get_object_or_404(Post, id=post_id)
+    form = PostForm()
+    if request.method == "POST":
+        # form
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Post Updated Succesfully!")
+            return redirect("blog:dashboard")
+
+    return render(
+        request,
+        "blog/edit_post.html",
+        {"categories": categories, "post": post, "form": form},
+    )
+
+
+@login_required
+@permission_required("blog.delete_post", raise_exception=True)
+def delete_post(request, post_id):
+    """To get a delete_post views"""
+    post = get_object_or_404(Post, id=post_id)
+    post.delete()
+    messages.success(request, "Post Deleted Succesfully!")
+    return redirect("blog:dashboard")
+
+
+@login_required
+@permission_required("blog.can_publish", raise_exception=True)
+def publish_post(request, post_id):
+    """To get a published_post views"""
+    post = get_object_or_404(Post, id=post_id)
+    post.is_published = True
+    post.save()
+    messages.success(request, "Post Published Succesfully!")
+    return redirect("blog:dashboard")
+
+
+User = get_user_model()
+
+
+def login(request):
+    """Handle both traditional and OTP login"""
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                auth_login(request, user)
+                return redirect("blog:dashboard")
+            else:
+                messages.error(request, "Invalid username or password")
+    else:
+        form = LoginForm()
+    return render(request, "blog/login.html", {"form": form})
+
+
+def email_login(request):
+    """Initiate OTP login process"""
+    if request.method == "POST":
+        form = EmailLoginForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data["email"]
+            otp = str(random.randint(100000, 999999))
+            expiry_time = timezone.now() + timedelta(minutes=3)
+
+            # Store OTP in session
+            request.session["otp_data"] = {
+                "otp": otp,
+                "expiry": expiry_time.isoformat(),
+                "email": email,
+            }
+
+            # Send OTP email
+            send_mail(
+                "Your Login OTP",
+                f"Your OTP code is: {otp}\n\nThis code will expire in 3 minutes.",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            messages.success(request, "OTP has been sent to your email!")
+            return redirect("blog:verify_otp")
+    else:
+        form = EmailLoginForm()
+
+    return render(request, "blog/email_login.html", {"form": form})
+
+
+def verify_otp(request):
+    """Verify the OTP entered by user"""
+    otp_data = request.session.get("otp_data")
+    if not otp_data:
+        messages.error(request, "Session expired. Please request a new OTP.")
+        return redirect("blog:email_login")
+
+    email = otp_data["email"]
+    expiry_time = datetime.fromisoformat(otp_data["expiry"])
+
+    if request.method == "POST":
+        form = OTPVerificationForm(request.POST)
+        if form.is_valid():
+            user_otp = form.cleaned_data["otp"]
+
+            # Check if OTP expired
+            if timezone.now() > expiry_time:
+                messages.error(request, "OTP has expired. Please request a new one.")
+                return redirect("blog:email_login")
+
+            # Verify OTP
+            if user_otp == otp_data["otp"]:
+                user = User.objects.get(email=email)
+                auth_login(request, user)
+                del request.session["otp_data"]
+                messages.success(request, "Logged in successfully!")
+                return redirect("blog:dashboard")
+            else:
+                messages.error(request, "Invalid OTP. Please try again.")
+    else:
+        form = OTPVerificationForm()
+
+    # Calculate remaining time in seconds
+    remaining_seconds = max(0, int((expiry_time - timezone.now()).total_seconds()))
+
+    return render(
+        request,
+        "blog/verify_otp.html",
+        {
+            "form": form,
+            "email": email,
+            "remaining_seconds": remaining_seconds,
+            "otp_expiry": otp_data["expiry"],
+        },
+    )
+
+
+from django.http import JsonResponse
+
+
+def resend_otp(request):
+    """Handle OTP resend requests"""
+    if request.method == "POST":
+        otp_data = request.session.get("otp_data")
+        if not otp_data:
+            return JsonResponse({"success": False, "error": "Session expired"})
+
+        email = otp_data["email"]
+        new_otp = str(random.randint(100000, 999999))
+        expiry_time = timezone.now() + timedelta(minutes=3)
+
+        # Update session with new OTP
+        request.session["otp_data"] = {
+            "otp": new_otp,
+            "expiry": expiry_time.isoformat(),
+            "email": email,
+        }
+
+        # Send new OTP email
+        send_mail(
+            "Your New Login OTP",
+            f"Your new OTP code is: {new_otp}\n\nThis code will expire in 3 minutes.",
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "New OTP sent successfully",
+                "new_expiry": expiry_time.isoformat(),
+            }
+        )
+
+    return JsonResponse({"success": False, "error": "Invalid request"})
