@@ -1,19 +1,54 @@
 {% extends 'blog/base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4>Email Login</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary w-100">Send OTP</button>
-                    </form>
+<div class="auth-bg d-flex align-items-center justify-content-center min-vh-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4 animate__animated animate__fadeInUp">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden card-hover">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                                style="width: 60px; height: 60px;">
+                                <i class="bi bi-envelope-paper fs-3"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1">Email Login</h3>
+                            <p class="text-muted small">Sign in with a One-Time Password (OTP)</p>
+                        </div>
+
+                        {% include 'blog/includes/errors.html' %}
+
+                        <form method="post" novalidate onsubmit="showLoading(this)">
+                            {% csrf_token %}
+
+                            <div class="form-floating mb-4">
+                                {{ form.email }}
+                                <label for="{{ form.email.id_for_label }}">Email Address</label>
+                                {% if form.email.errors %}
+                                <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit" id="submitBtn"
+                                class="btn btn-primary-custom w-100 py-3 rounded-pill shadow-sm mb-3 fw-bold">
+                                <span>Send OTP</span> <i class="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        </form>
+
+                        <script>
+                            function showLoading(form) {
+                                const btn = form.querySelector('#submitBtn');
+                                btn.disabled = true;
+                                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...';
+                            }
+                        </script>
+
+                        <div class="text-center mt-4">
+                            <a href="{% url 'blog:login' %}" class="text-decoration-none text-muted small hover-link">
+                                <i class="bi bi-arrow-left me-1"></i> Back to Password Login
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

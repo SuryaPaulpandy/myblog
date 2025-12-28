@@ -1,26 +1,23 @@
 """Django Forms Modules"""
 
-import random
-
 from django import forms
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-
-from blog.models import Category, Post
-
-
 from django.core.validators import RegexValidator
+
+from blog.models import Category, Post, Subscriber
+
+User = get_user_model()
 
 
 class RegisterForm(forms.ModelForm):
     """This is a registerform"""
 
-    username = forms.CharField(label="username", max_length=100, required=True)
-    email = forms.CharField(label="email", max_length=100, required=True)
-    password = forms.CharField(label="password", max_length=100, required=True)
+    username = forms.CharField(label="Username", max_length=100, required=True, widget=forms.TextInput(attrs={"class": "form-control"}))
+    email = forms.EmailField(label="Email", max_length=100, required=True, widget=forms.EmailInput(attrs={"class": "form-control"}))
+    password = forms.CharField(label="Password", max_length=100, required=True, widget=forms.PasswordInput(attrs={"class": "form-control"}))
     password_confirm = forms.CharField(
-        label="password confirm", max_length=100, required=True
+        label="Confirm Password", max_length=100, required=True, widget=forms.PasswordInput(attrs={"class": "form-control"})
     )
 
     class Meta:
@@ -39,8 +36,8 @@ class RegisterForm(forms.ModelForm):
 class ResetPasswordForm(forms.Form):
     """This is ResetPasswordForm"""
 
-    new_password = forms.CharField(label="New Password", min_length=8)
-    confirm_password = forms.CharField(label="Confirm Password", min_length=8)
+    new_password = forms.CharField(label="New Password", min_length=8, widget=forms.PasswordInput(attrs={"class": "form-control"}))
+    confirm_password = forms.CharField(label="Confirm Password", min_length=8, widget=forms.PasswordInput(attrs={"class": "form-control"}))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -54,12 +51,12 @@ class ResetPasswordForm(forms.Form):
 class PostForm(forms.ModelForm):
     """This is a NewPostForm"""
 
-    title = forms.CharField(label="Title", max_length=200, required=True)
-    content = forms.CharField(label="Content", required=True)
+    title = forms.CharField(label="Title", max_length=200, required=True, widget=forms.TextInput(attrs={"class": "form-control"}))
+    content = forms.CharField(label="Content", required=True, widget=forms.Textarea(attrs={"class": "form-control", "rows": 5}))
     category = forms.ModelChoiceField(
-        label="Category", required=True, queryset=Category.objects.all()
+        label="Category", required=True, queryset=Category.objects.all(), widget=forms.Select(attrs={"class": "form-select"})
     )
-    img_url = forms.ImageField(label="Image", required=False)
+    img_url = forms.ImageField(label="Image", required=False, widget=forms.FileInput(attrs={"class": "form-control"}))
 
     class Meta:
         model = Post
@@ -77,110 +74,14 @@ class PostForm(forms.ModelForm):
         if content and len(content) < 10:
             raise forms.ValidationError("Content must be at least 10 Characters long.")
 
-    def save(self, commit=...):
-
-        post = super().save(commit)
-        cleaned_data = super().clean()
-
-        if cleaned_data.get("img_url"):
-            post.img_url = cleaned_data.get("img_url")
-        else:
-            img_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/600px-No_image_available.svg.png"
-            post.img_url = img_url
+    def save(self, commit=True):
+        post = super().save(commit=False)
+        if not self.cleaned_data.get("img_url") and not post.img_url:
+             pass # logic to keep existing or default handled in view/model
 
         if commit:
             post.save()
         return post
-
-
-User = get_user_model()
-
-
-# class LoginForm(forms.Form):
-#     """Existing password login form"""
-
-#     username = forms.CharField(label="Username", max_length=100, required=True)
-#     password = forms.CharField(label="Password", max_length=100, required=True)
-
-
-# class EmailLoginForm(forms.Form):
-#     """Form for email-based OTP login"""
-
-#     email = forms.EmailField(label="Email", required=True)
-
-#     def clean_email(self):
-#         email = self.cleaned_data.get("email")
-#         if not User.objects.filter(email=email).exists():
-#             raise ValidationError("No account found with this email address.")
-#         return email
-
-
-# class VerifyOTPForm(forms.Form):
-#     """Form for OTP verification"""
-
-#     otp = forms.CharField(
-#         label="OTP",
-#         max_length=6,
-#         min_length=6,
-#         required=True,
-#         widget=forms.TextInput(
-#             attrs={"placeholder": "Enter 6-digit code", "class": "form-control"}
-#         ),
-#     )
-#     email = forms.EmailField(widget=forms.HiddenInput())
-
-#     def clean_otp(self):
-#         otp = self.cleaned_data.get("otp")
-#         if not otp.isdigit():
-#             raise forms.ValidationError("OTP must contain only numbers")
-#         return otp
-
-
-# class VerifyOTPForm(forms.Form):
-#     otp = forms.CharField(
-#         label="OTP Code",
-#         max_length=6,
-#         min_length=6,
-#         widget=forms.TextInput(
-#             attrs={"placeholder": "Enter 6-digit code", "class": "form-control"}
-#         ),
-#         validators=[RegexValidator(regex="^[0-9]{6}$", message="OTP must be 6 digits")],
-#     )
-#     email = forms.EmailField(widget=forms.HiddenInput())
-
-
-User = get_user_model()
-
-
-class ForgotPasswordForm(forms.Form):
-    """Improved forgot password form with better validation"""
-
-    email = forms.EmailField(
-        label="Email",
-        max_length=254,
-        required=True,
-        widget=forms.EmailInput(
-            attrs={"placeholder": "Enter your email address", "class": "form-control"}
-        ),
-    )
-
-    def clean_email(self):
-        """Validate that email exists in system"""
-        email = self.cleaned_data.get("email").lower().strip()
-
-        if not User.objects.filter(email__iexact=email).exists():
-            raise ValidationError("No account found with this email address.")
-
-        return email
-
-
-from django import forms
-from django.core.validators import RegexValidator, validate_email
-from django.core.exceptions import ValidationError
-from django.contrib.auth import get_user_model
-from blog.models import Category, Post
-
-User = get_user_model()
 
 
 class LoginForm(forms.Form):
@@ -218,18 +119,6 @@ class EmailLoginForm(forms.Form):
 
 class OTPVerificationForm(forms.Form):
     """Form for OTP verification"""
-
-    otp = forms.CharField(
-        label="OTP",
-        max_length=6,
-        min_length=6,
-        required=True,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Enter 6-digit code"}
-        ),
-        validators=[RegexValidator(regex="^[0-9]{6}$", message="OTP must be 6 digits")],
-    )
-    """Form for OTP verification"""
     otp = forms.CharField(
         label="OTP Code",
         max_length=6,
@@ -249,3 +138,60 @@ class OTPVerificationForm(forms.Form):
             "max_length": "OTP must be 6 digits",
         },
     )
+
+
+class ForgotPasswordForm(forms.Form):
+    """Improved forgot password form with better validation"""
+
+    email = forms.EmailField(
+        label="Email",
+        max_length=254,
+        required=True,
+        widget=forms.EmailInput(
+            attrs={"placeholder": "Enter your email address", "class": "form-control"}
+        ),
+    )
+
+    def clean_email(self):
+        """Validate that email exists in system"""
+        email = self.cleaned_data.get("email").lower().strip()
+
+        if not User.objects.filter(email__iexact=email).exists():
+            raise ValidationError("No account found with this email address.")
+
+        return email
+
+
+class EditProfileForm(forms.ModelForm):
+    """Form to edit user profile details"""
+    
+    first_name = forms.CharField(required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    username = forms.CharField(required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('This email is already currently used.')
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('This username is already taken.')
+        return username
+
+
+class SubscribeForm(forms.Form):
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email'}), label='')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Subscriber.objects.filter(email=email).exists():
+            raise forms.ValidationError('You are already subscribed!')
+        return email

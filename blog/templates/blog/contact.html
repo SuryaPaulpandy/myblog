@@ -1,46 +1,90 @@
 {% extends 'blog/base.html' %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-center mt-5">
-        <div class="d-flex gap-3 flex-column">
-            <h3>Contact Form</h3>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="row g-0">
+                    <!-- Contact Info / Image Side -->
+                    <div
+                        class="col-md-5 bg-primary text-white p-5 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                        <div class="position-relative z-1">
+                            <h3 class="fw-bold mb-4">Get in Touch</h3>
+                            <p class="mb-4">Have questions or feedback? We'd love to hear from you. Fill out the form
+                                and we'll get back to you as soon as possible.</p>
 
-            <!-- Displaying errors for each field -->
-            {% if error_message %}
-                <div class="alert alert-danger" role="alert">
-                    {{ error_message }}
-                </div>
-            {% endif %}
+                            <div class="d-flex flex-column gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-geo-alt fs-4"></i>
+                                    <span>Theni, TamilNadu</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-envelope fs-4"></i>
+                                    <span>suryaofficial0111@gmail.com</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-telephone fs-4"></i>
+                                    <span>+91 7448645183</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Nice abstract shape decoration -->
+                        <div class="position-absolute top-0 start-0 w-100 h-100"
+                            style="background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);">
+                        </div>
+                        <div class="position-absolute bottom-0 end-0 p-5 translate-middle-y">
+                            <i class="bi bi-chat-dots text-white opacity-25" style="font-size: 10rem;"></i>
+                        </div>
+                    </div>
 
-            <!-- Success message after form submission -->
-            {% if success_message %}
-                <div class="alert alert-success" role="alert">
-                    {{ success_message }}
-                </div>
-            {% endif %}
+                    <!-- Contact Form Side -->
+                    <div class="col-md-7 p-5 bg-white">
+                        <h4 class="fw-bold mb-4 text-dark">Send us a Message</h4>
 
-            <form method="post" class="row g-3">
-                {% csrf_token %}
-                <div class="col-md-6">
-                    <label for="name" class="form-label">Name</label>
-                    <input type="text" class="form-control" id="name" value="{{ name|default:'' }}" name="name" required>
-                </div>
+                        <!-- Displaying errors for each field -->
+                        {% if error_message %}
+                        <div class="alert alert-danger rounded-3 border-0 shadow-sm" role="alert">
+                            <i class="bi bi-exclamation-circle me-2"></i>{{ error_message }}
+                        </div>
+                        {% endif %}
 
-                <div class="col-md-6">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" value="{{ email|default:'' }}" name="email" required>
-                </div>
+                        <!-- Success message after form submission -->
+                        {% if success_message %}
+                        <div class="alert alert-success rounded-3 border-0 shadow-sm" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>{{ success_message }}
+                        </div>
+                        {% endif %}
 
-                <div class="col-12">
-                    <label for="message" class="form-label">Message</label>
-                    <textarea class="form-control" id="message" name="message" rows="4" required>{{ message|default:'' }}</textarea>
-                </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="name" value="{{ name|default:'' }}"
+                                    name="name" placeholder="John Doe" required>
+                                <label for="name">Your Name</label>
+                            </div>
 
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                            <div class="form-floating mb-3">
+                                <input type="email" class="form-control" id="email" value="{{ email|default:'' }}"
+                                    name="email" placeholder="name@example.com" required>
+                                <label for="email">Email Address</label>
+                            </div>
+
+                            <div class="form-floating mb-4">
+                                <textarea class="form-control" id="message" name="message"
+                                    placeholder="Leave a comment here" style="height: 150px"
+                                    required>{{ message|default:'' }}</textarea>
+                                <label for="message">Message</label>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary-custom btn-lg shadow-sm">Send Message <i
+                                        class="bi bi-send ms-2"></i></button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>

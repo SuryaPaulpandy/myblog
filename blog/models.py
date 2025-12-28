@@ -4,16 +4,6 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.text import slugify
 
-import random
-import string
-
-from django.contrib.auth.models import User
-
-
-from django.db import models
-from django.utils import timezone
-
-
 class Category(models.Model):
     """This is a post title"""
 
@@ -34,6 +24,9 @@ class Post(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    
+    # New Field for Saved/Bookmarked Posts
+    saved_by = models.ManyToManyField(User, related_name='saved_posts', blank=True)
 
     is_published = models.BooleanField(default=False)
 
@@ -62,15 +55,9 @@ class AboutUs(models.Model):
     content = models.TextField()
 
 
-# class OTP(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     otp = models.CharField(max_length=6)
-#     created_at = models.DateTimeField(auto_now_add=True)
+class Subscriber(models.Model):
+    email = models.EmailField(unique=True)
+    subscribed_at = models.DateTimeField(auto_now_add=True)
 
-#     def is_expired(self):
-#         expiration_time = self.created_at + timezone.timedelta(minutes=5)
-#         return timezone.now() > expiration_time
-
-#     def generate_otp(self):
-#         self.otp = "".join(random.choices(string.digits, k=6))
-#         self.save()
+    def __str__(self):
+        return self.email

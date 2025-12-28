@@ -1,35 +1,49 @@
 {% extends 'blog/base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4>Verify OTP</h4>
-                </div>
-                <div class="card-body">
-                    <p>We've sent a 6-digit code to <strong>{{ email }}</strong></p>
-                    
-                    <div class="alert alert-info">
-                        <i class="bi bi-clock"></i> 
-                        <span id="countdown">03:00</span> remaining
-                    </div>
-                    
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-danger">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    <form method="post" id="otp-form">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary w-100 mb-3">Verify</button>
-                    </form>
-                    
-                    <div class="text-center">
-                        <button id="resend-btn" class="btn btn-link">Resend OTP</button>
+<div class="auth-bg d-flex align-items-center justify-content-center min-vh-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4 animate__animated animate__fadeInUp">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden card-hover">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <div class="bg-info bg-opacity-10 text-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                                style="width: 60px; height: 60px;">
+                                <i class="bi bi-shield-lock fs-3"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1">Verify OTP</h3>
+                            <p class="text-muted small">Enter the code sent to<br><strong>{{ email }}</strong></p>
+                        </div>
+
+                        <div class="alert alert-light border-0 shadow-sm text-center mb-4 text-primary fw-bold"
+                            role="alert">
+                            <i class="bi bi-stopwatch me-2"></i> <span id="countdown">03:00</span>
+                        </div>
+
+                        {% include 'blog/includes/errors.html' %}
+
+                        <form method="post" id="otp-form">
+                            {% csrf_token %}
+                            <div class="form-floating mb-4">
+                                {{ form.otp }}
+                                <label for="{{ form.otp.id_for_label }}">6-Digit OTP</label>
+                                {% if form.otp.errors %}
+                                <div class="text-danger small mt-1">{{ form.otp.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit"
+                                class="btn btn-primary-custom w-100 py-3 rounded-pill shadow-sm mb-3 fw-bold">
+                                Verify & Proceed <i class="bi bi-check-lg ms-2"></i>
+                            </button>
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <button id="resend-btn"
+                                class="btn btn-link text-decoration-none text-muted small p-0">Didn't receive code?
+                                <strong>Resend</strong></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -38,49 +52,58 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const expiryTime = new Date("{{ otp_expiry }}").getTime();
-    const countdown = document.getElementById('countdown');
-    const resendBtn = document.getElementById('resend-btn');
-    
-    function updateTimer() {
-        const now = new Date().getTime();
-        const distance = expiryTime - now;
-        
-        if (distance <= 0) {
-            countdown.textContent = 'EXPIRED';
-            document.querySelector('.alert-info').className = 'alert alert-danger';
-            return;
-        }
-        
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        
-        countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        setTimeout(updateTimer, 1000);
-    }
-    
-    updateTimer();
-    
-    resendBtn.addEventListener('click', function() {
-        fetch("{% url 'blog:resend_otp' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({})
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('New OTP sent successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add form-control class to manually rendered fields if needed, 
+        // though floating labels usually handle it if widget attrs are set correctly in forms.py.
+        // Ensure the input has 'form-control' class in the python form definition or add it here:
+        const otpInput = document.querySelector('input[name="otp"]');
+        if (otpInput) otpInput.classList.add('form-control');
+
+        const expiryTime = new Date("{{ otp_expiry }}").getTime();
+        const countdown = document.getElementById('countdown');
+        const resendBtn = document.getElementById('resend-btn');
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = expiryTime - now;
+
+            if (distance <= 0) {
+                countdown.textContent = 'EXPIRED';
+                const alertBox = document.querySelector('.alert-light');
+                alertBox.classList.remove('alert-light', 'text-primary');
+                alertBox.classList.add('alert-danger', 'text-danger');
+                return;
             }
+
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            setTimeout(updateTimer, 1000);
+        }
+
+        updateTimer();
+
+        resendBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fetch("{% url 'blog:resend_otp' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('New OTP sent successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
         });
     });
-});
 </script>
 {% endblock %}

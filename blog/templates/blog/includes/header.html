@@ -1,21 +1,68 @@
-<header class="p-3 bg-dark text-white">
-    <div class="row">
-        <div class="col">
-            <a class="text-light text-decoration-none" href="/"><h3>Blog</h3></a>
-        </div>
-        <div class="col">
-            <div class="d-flex justify-content-center gap-3">
-                <a class="text-light text-decoration-none" href="/">Home</a>
-                <a class="text-light text-decoration-none" href="/about">About</a>
-                <a class="text-light text-decoration-none" href="/contact">Contact</a>
+<nav class="navbar navbar-expand-lg navbar-light fixed-top navbar-glass">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-3" href="/">
+            <i class="bi bi-journal-text text-primary me-2"></i>My<span class="text-primary">Blog</span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center gap-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/contact">Contact</a>
+                </li>
+
                 {% if user.is_authenticated %}
-                    <a class="text-light text-decoration-none" href="{% url 'blog:dashboard' %}">Dashboard</a>
-                    <a class="text-light text-decoration-none" href="{% url 'blog:logout' %}">Logout</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="navbarDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle fs-5"></i>
+                        <span>{{ user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 animate__animated animate__fadeIn"
+                        aria-labelledby="navbarDropdown">
+                        <li>
+                            <h6 class="dropdown-header">Hello, {{ user.username }}!</h6>
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'blog:dashboard' %}"><i
+                                    class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                        <li><a class="dropdown-item" href="{% url 'blog:profile' %}"><i
+                                    class="bi bi-person me-2"></i>Profile</a></li>
+                        {% if user.is_superuser %}
+                        <li><a class="dropdown-item" href="/admin/"><i class="bi bi-shield-lock me-2"></i>Admin
+                                Panel</a></li>
+                        {% endif %}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form action="{% url 'blog:logout' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
                 {% else %}
-                    <a class="text-light text-decoration-none" href="{% url 'blog:register' %}">Register</a>
-                    <a class="text-light text-decoration-none" href="{% url 'blog:login' %}">Login</a>
+                <li class="nav-item">
+                    <a class="btn btn-outline-custom btn-sm" href="{% url 'blog:register' %}">Register</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-primary-custom btn-sm shadow-sm" href="{% url 'blog:login' %}">Login</a>
+                </li>
                 {% endif %}
-            </div>
+            </ul>
         </div>
     </div>
-</header>
+</nav>
+<!-- Spacer for fixed navbar -->
+<div style="height: 80px;"></div>

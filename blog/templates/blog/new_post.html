@@ -1,47 +1,65 @@
 {% extends 'blog/base.html' %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row d-flex justify-content-center mt-5">
-        <div class="col-4">
-            <h3>New Post</h3>
-            <div class="">
-                {% include 'blog/includes/errors.html' %}
-            </div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 animate__animated animate__fadeInUp">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white p-4 position-relative overflow-hidden">
+                    <div class="position-relative z-1">
+                        <h2 class="fw-bold mb-0">Create New Post</h2>
+                        <p class="mb-0 opacity-75">Share your thoughts with the world</p>
+                    </div>
+                    <!-- Background Decoration -->
+                    <div class="position-absolute top-0 start-0 w-100 h-100"
+                        style="background: linear-gradient(45deg, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0.1) 100%);">
+                    </div>
+                </div>
 
-            <div class="my-3">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="title" value="">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="content" class="form-label">Content</label>
-                        <textarea class="form-control" id="content" name="content"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="image" class="form-label">Image</label>
-                        <input type="file" class="form-control-file" name="img_url" id="">
-                    </div>
+                <div class="card-body p-4 p-md-5 bg-white">
+                    {% include 'blog/includes/errors.html' %}
 
-                    <div class="form-group">
-                        <label for="category" class="form-label">Category</label>
-                        <select class="form-control" id="category" name="category">
-                            <option value="">Select</option>
-                            {% if categories %}
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" name="title" id="title"
+                                placeholder="Enter post title" required>
+                            <label for="title">Post Title</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" selected disabled>Select a category</option>
+                                {% if categories %}
                                 {% for category in categories %}
-                                    <option  value="{{category.id}}">{{category.name}}</option>
+                                <option value="{{category.id}}">{{category.name}}</option>
                                 {% endfor %}
-                            {% endif %}
-                        </select>
-                    </div>
-                    
-                    <div class="my-3 d-flex justify-content-end">
-                        <button type="submit" class="btn btn-primary">Create</button>
-                    </div>
-                </form>
+                                {% endif %}
+                            </select>
+                            <label for="category">Category</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="content" class="form-label text-muted ms-1 small fw-bold">CONTENT</label>
+                            <textarea class="form-control" id="content" name="content" rows="10"
+                                placeholder="Write something amazing..." style="min-height: 200px;"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="img_url" class="form-label text-muted ms-1 small fw-bold">COVER IMAGE</label>
+                            <input type="file" class="form-control" name="img_url" id="img_url">
+                            <div class="form-text">Choose a visually appealing cover image for your post.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{% url 'blog:dashboard' %}" class="btn btn-light rounded-pill px-4">Cancel</a>
+                            <button type="submit" class="btn btn-primary-custom rounded-pill px-5 shadow-sm">
+                                <i class="bi bi-send-fill me-2"></i>Publish Post
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

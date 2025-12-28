@@ -2,7 +2,7 @@
 
 import logging
 import random
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib import messages
@@ -10,32 +10,18 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.cache import cache
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-
-
-from django.utils import timezone
-from .forms import LoginForm, EmailLoginForm, OTPVerificationForm
-
-
-from datetime import datetime, timedelta
-
-
-logger = logging.getLogger(__name__)
-
-from django.contrib.auth import get_user_model
-
 
 from .forms import (
     ForgotPasswordForm,
@@ -45,26 +31,58 @@ from .forms import (
     LoginForm,
     EmailLoginForm,
     OTPVerificationForm,
+    EditProfileForm,
+    SubscribeForm,
 )
-from .models import AboutUs, Category, Post
+from .models import AboutUs, Category, Post, Subscriber
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 def index(request):
     """Display all blog posts on the index page."""
     blog_title = "Latest Posts"
     all_posts = Post.objects.filter(is_published=True)
+    categories = Category.objects.all()
+
+    category_name = request.GET.get("category")
+    if category_name:
+        all_posts = all_posts.filter(category__name=category_name)
+        blog_title = f"{category_name} Posts"
+
     paginator = Paginator(all_posts, 5)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    return render(
-        request, "blog/index.html", {"blog_title": blog_title, "page_obj": page_obj}
+    
+    # Calculate elided page range for pagination
+    custom_range = page_obj.paginator.get_elided_page_range(
+        page_obj.number, 
+        on_each_side=1, 
+        on_ends=1
     )
-
+    
+    return render(
+        request, 
+        "blog/index.html", 
+        {
+            "blog_title": blog_title, 
+            "page_obj": page_obj,
+            "paginator": paginator,
+            "categories": categories,
+            "current_category": category_name,
+            "custom_range": custom_range
+        }
+    )
 
 def detail(request, slug):
     """Display the detail page of a specific blog post using the slug."""
 
-    if request.user and not request.user.has_perm("blog.view_post"):
+    if not request.user.is_authenticated:
+        messages.info(request, "Please sign in")
+        return redirect("blog:login")
+
+    if not request.user.has_perm("blog.view_post"):
         messages.error(request, "You have no permission to view any posts")
         return redirect("blog:index")
     post = get_object_or_404(Post, slug=slug)
@@ -174,27 +192,10 @@ def register(request):
     return render(request, "blog/register.html", {"form": form})
 
 
-User = get_user_model()
 
+# ... (rest of the file content is mostly fine, just removing the redundant User definition lines)
 
-# def login(request):
-#     """Existing password login"""
-#     if request.method == "POST":
-#         form = LoginForm(request.POST)
-#         if form.is_valid():
-#             username = form.cleaned_data["username"]
-#             password = form.cleaned_data["password"]
-#             user = authenticate(username=username, password=password)
-#             if user is not None:
-#                 auth_login(request, user)
-#                 return redirect("blog:dashboard")
-#             else:
-#                 messages.error(request, "Invalid username or password")
-#     else:
-#         form = LoginForm()
-#     return render(request, "blog/login.html", {"form": form})
-
-
+@login_required
 def dashboard(request):
     """To get a dashboard page"""
     blog_title = "My Posts"
@@ -204,9 +205,32 @@ def dashboard(request):
 
     all_posts = Post.objects.filter(user=request.user)
 
+    # Calculate statistics (before filtering the list)
+    total_posts = all_posts.count()
+    published_posts = all_posts.filter(is_published=True).count()
+    draft_posts = all_posts.filter(is_published=False).count()
+
+    # Apply filters
+    filter_type = request.GET.get("filter")
+    if filter_type == "published":
+        all_posts = all_posts.filter(is_published=True)
+    elif filter_type == "drafts":
+        all_posts = all_posts.filter(is_published=False)
+
+    # Check for sections (e.g. Saved Items)
+    section = request.GET.get('section')
+    if section == 'saved':
+        all_posts = request.user.saved_posts.all()
+        blog_title = "Saved Items"
+
     paginator = Paginator(all_posts, 5)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+
+    # Use elided page range for cleaner, consistent pagination UI
+    custom_range = page_obj.paginator.get_elided_page_range(
+        page_obj.number, on_each_side=1, on_ends=1
+    )
 
     return render(
         request,
@@ -214,8 +238,14 @@ def dashboard(request):
         {
             "blog_title": blog_title,
             "page_obj": page_obj,
+            "custom_range": custom_range,
             "username": username,
             "is_logged_in": is_logged_in,
+            "total_posts": total_posts,
+            "published_posts": published_posts,
+            "draft_posts": draft_posts,
+            "current_filter": filter_type,
+            "current_section": section,
         },
     )
 
@@ -226,8 +256,6 @@ def logout(request):
     request.session.flush()
     return redirect("blog:index")
 
-
-User = get_user_model()
 
 
 def forgot_password(request):
@@ -398,9 +426,6 @@ def publish_post(request, post_id):
     return redirect("blog:dashboard")
 
 
-User = get_user_model()
-
-
 def login(request):
     """Handle both traditional and OTP login"""
     if request.method == "POST":
@@ -474,7 +499,7 @@ def verify_otp(request):
 
             # Verify OTP
             if user_otp == otp_data["otp"]:
-                user = User.objects.get(email=email)
+                user = User.objects.filter(email=email).first()
                 auth_login(request, user)
                 del request.session["otp_data"]
                 messages.success(request, "Logged in successfully!")
@@ -498,8 +523,6 @@ def verify_otp(request):
         },
     )
 
-
-from django.http import JsonResponse
 
 
 def resend_otp(request):
@@ -538,3 +561,59 @@ def resend_otp(request):
         )
 
     return JsonResponse({"success": False, "error": "Invalid request"})
+
+
+@login_required
+def profile(request):
+    """Display user profile"""
+    return render(request, "blog/profile.html", {"user": request.user})
+
+
+@login_required
+def edit_profile(request):
+    """View to edit user profile"""
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile looks amazing!')
+            return redirect('blog:profile')
+    else:
+        form = EditProfileForm(instance=request.user)
+    
+    return render(request, 'blog/edit_profile.html', {'form': form})
+
+
+def subscribe(request):
+    """Handle newsletter subscription"""
+    if request.method == 'POST':
+        form = SubscribeForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            Subscriber.objects.create(email=email)
+            messages.success(request, 'Successfully subscribed to the newsletter!')
+        else:
+            # If checking directly on index/detail might be tricky to render errors inline 
+            # without full context, often better to just flash message or simple redirect.
+            # For simplicity, we'll flash the first error.
+            if form.errors:
+                key, error_list = list(form.errors.items())[0]
+                messages.error(request, error_list[0])
+            
+    # Redirect back to where the user came from, or home
+    next_url = request.META.get('HTTP_REFERER', '/')
+    return redirect(next_url)
+
+
+@login_required
+def toggle_save_post(request, post_id):
+    """Save or unsave a post"""
+    post = get_object_or_404(Post, id=post_id)
+    if post.saved_by.filter(id=request.user.id).exists():
+        post.saved_by.remove(request.user)
+        messages.success(request, 'Post removed from saved items.')
+    else:
+        post.saved_by.add(request.user)
+        messages.success(request, 'Post saved successfully.')
+    
+    return redirect('blog:detail', slug=post.slug)

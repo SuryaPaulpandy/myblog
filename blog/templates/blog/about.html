@@ -1,24 +1,77 @@
 {% extends 'blog/base.html' %}
- 
- {% block content %}
-    <div class="container-fluid ">
-        <h3>About Us</h3>
-        <div class="d-flex gap-3 justify-content-center mt-5">
-            <img src="https://picsum.photos/300/300" alt="">
-            <div class="content">
-                Welcome to our website! We are dedicated to providing high-quality products and excellent customer service. Our team consists of experienced professionals who are passionate about delivering the best solutions to our customers. With a focus on innovation and integrity, we strive to exceed expectations in every aspect of our business.
-    
-                Our company was founded on the principles of honesty, reliability, and transparency. We believe in building strong relationships with our customers and partners based on trust and mutual respect. By listening to our customers' needs and adapting to changing market trends, we continue to evolve and improve our offerings.
-                
-                At our core, we are driven by a commitment to excellence and continuous improvement. We invest in research and development to stay ahead of the curve and bring cutting-edge solutions to our customers. Our dedication to quality ensures that every product we deliver meets the highest standards of performance and reliability.
-                
-                We are proud of our track record of success and the positive impact we have made in the industry. But we are not content to rest on our laurels. We are always looking for new opportunities to grow and expand our reach, while staying true to our values and vision.
-                
-                Thank you for choosing us as your trusted partner. We look forward to serving you and exceeding your expectations for many years to come.
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="text-center mb-5 animate__animated animate__fadeIn">
+        <h1 class="fw-bold display-4 text-gradient mb-3">About Us</h1>
+        <p class="lead text-muted mx-auto" style="max-width: 700px;">We are dedicated to providing high-quality
+            solutions and excellent customer service. Our team consists of experienced professionals passionate about
+            innovation.</p>
+    </div>
+
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0 animate__animated animate__fadeInLeft">
+            <img src="https://picsum.photos/800/600" alt="About Us" class="img-fluid rounded-4 shadow-lg">
+        </div>
+        <div class="col-lg-6 animate__animated animate__fadeInRight">
+            <div class="ps-lg-4">
+                <h3 class="fw-bold mb-3">Our Story</h3>
+                <p class="text-muted mb-4">
+                    Welcome to our website! We are dedicated to providing high-quality products and excellent customer
+                    service. Our team consists of experienced professionals who are passionate about delivering the best
+                    solutions to our customers. With a focus on innovation and integrity, we strive to exceed
+                    expectations in every aspect of our business.
+                </p>
+                <p class="text-muted mb-4">
+                    Our company was founded on the principles of honesty, reliability, and transparency. We believe in
+                    building strong relationships with our customers and partners based on trust and mutual respect.
+                </p>
+                <a href="{% url 'blog:contact' %}" class="btn btn-primary-custom shadow-sm">Get in Touch</a>
             </div>
-            
         </div>
     </div>
 
-    
+    <!-- Values Section -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm card-hover rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="mb-3 text-primary">
+                        <i class="bi bi-lightbulb fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold">Innovation</h5>
+                    <p class="text-muted small">We constantly strive to improve and bring cutting-edge solutions to our
+                        customers.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm card-hover rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="mb-3 text-primary">
+                        <i class="bi bi-shield-check fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold">Integrity</h5>
+                    <p class="text-muted small">We believe in honesty, transparency, and building trust with our
+                        community.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm card-hover rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="mb-3 text-primary">
+                        <i class="bi bi-people fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold">Community</h5>
+                    <p class="text-muted small">We listen to our customers and adapt to their needs to create real
+                        value.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}

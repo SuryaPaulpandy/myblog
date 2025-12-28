@@ -105,13 +105,14 @@ class Command(BaseCommand):
         ]
 
         img_urls = [
-            "https://picsum.photos/id/1/800/400",
-            "https://picsum.photos/id/2/800/400",
-            "https://picsum.photos/id/3/800/400",
-            "https://picsum.photos/id/4/800/400",
-            "https://picsum.photos/id/5/800/400",
-            "https://picsum.photos/id/6/800/400",
-            "https://picsum.photos/id/7/800/400",
+            "https://picsum.photos/400/300",
+            "https://picsum.photos/id/22/800/400",
+            "https://picsum.photos/id/23/800/400",
+            "https://picsum.photos/id/32/800/400",
+            "https://picsum.photos/id/42/800/400",
+            "https://picsum.photos/id/52/800/400",
+            "https://picsum.photos/id/62/800/400",
+            "https://picsum.photos/id/72/800/400",
             "https://picsum.photos/id/8/800/400",
             "https://picsum.photos/id/9/800/400",
             "https://picsum.photos/id/10/800/400",

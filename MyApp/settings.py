@@ -146,21 +146,22 @@ LOGGING = {
     },
 }
 
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = "smtp.gmail.com"
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = "suryapaulpandi2002@gmail.com"
-# EMAIL_HOST_PASSWORD = "folv pljw fwvj veif"
-# DEFAULT_FROM_EMAIL = "suryapaulpandi2002@gmail.com"
-
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "sandbox.smtp.mailtrap.io"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "21cf5fcb1d21bd"
-EMAIL_HOST_PASSWORD = "fa17ab90ca1eaf"
+EMAIL_HOST_USER = "suryapaulpandi2002@gmail.com"
+EMAIL_HOST_PASSWORD = "folv pljw fwvj veif"
+# DEFAULT_FROM_EMAIL = "suryapaulpandi2002@gmail.com"
 DEFAULT_FROM_EMAIL = "info@surya.com"
+
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = "sandbox.smtp.mailtrap.io"
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = "21cf5fcb1d21bd"
+# EMAIL_HOST_PASSWORD = "fa17ab90ca1eaf"
+# DEFAULT_FROM_EMAIL = "info@surya.com"
 
 LOGIN_REDIRECT_URL = "/home/"  # or your named URL pattern
 LOGOUT_REDIRECT_URL = "/login/"  # optional
