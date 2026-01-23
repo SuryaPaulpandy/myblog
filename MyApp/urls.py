@@ -23,6 +23,15 @@ from django.urls import include, path
 urlpatterns = [
     path("", include("blog.urls")),
     path("admin/", admin.site.urls),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# Serve media files in development and production
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # In production, media files should be served via WhiteNoise or CDN
+    # For now, we'll serve them via Django (not ideal for production but works for free tier)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler404 = "MyApp.views.custom_page_not_found"

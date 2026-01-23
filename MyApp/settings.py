@@ -57,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware, before other middleware
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -65,7 +66,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "MyApp.middleware.RedirectAuthenticatedUserMiddleware",
     "MyApp.middleware.RestrictUnauthenticatedUserMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "MyApp.urls"
@@ -147,8 +147,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "/blog/static/blog"]
+# STATIC_URL and STATIC_ROOT are defined at the bottom of this file
+# STATICFILES_DIRS - where Django looks for static files during development
+STATICFILES_DIRS = [
+    BASE_DIR / "blog" / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -211,7 +214,13 @@ OTP_RESEND_LIMIT = 3  # Max resend attempts
 
 SESSION_SERIALIZER = "blog.custom_json.CustomJSONSerializer"
 
+# Static files configuration for production (Render)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise configuration for serving static files
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# WhiteNoise settings
+WHITENOISE_USE_FINDERS = True  # Use Django's finders during development
+WHITENOISE_AUTOREFRESH = True  # Auto-refresh static files during development

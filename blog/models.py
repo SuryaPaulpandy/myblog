@@ -38,12 +38,28 @@ class Post(models.Model):
 
     @property
     def formatted_img_url(self):
-        url = (
-            self.img_url
-            if str(self.img_url).startswith(("http://", "https://"))
-            else self.img_url.url
-        )
-        return url
+        """Return the image URL, handling both online URLs and uploaded files"""
+        if not self.img_url:
+            return "https://via.placeholder.com/800x400?text=No+Image"
+        
+        img_str = str(self.img_url)
+        
+        # If it's already an online URL (http/https), return as is
+        if img_str.startswith(("http://", "https://")):
+            return img_str
+        
+        # For uploaded files, return the full URL
+        try:
+            # In production (Render), use the media URL
+            from django.conf import settings
+            if hasattr(self.img_url, 'url'):
+                return self.img_url.url
+            else:
+                # Fallback: construct URL manually
+                return f"{settings.MEDIA_URL}{img_str}"
+        except:
+            # Final fallback
+            return "https://via.placeholder.com/800x400?text=Image+Not+Found"
 
     def __str__(self):
         return str(self.title)
