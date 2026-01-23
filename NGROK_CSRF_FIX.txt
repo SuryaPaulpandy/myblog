@@ -1,0 +1,49 @@
+========================================
+  CSRF ERROR FIX FOR NGROK
+========================================
+
+✅ FIXED: CSRF_TRUSTED_ORIGINS added to settings.py
+
+CURRENT NGROK URL:
+https://e0e9e5686e91.ngrok-free.app
+
+NEXT STEPS:
+-----------
+
+1. RESTART YOUR DJANGO SERVER:
+   - Stop the current server (Ctrl+C)
+   - Start again: python manage.py runserver 8002
+
+2. TRY LOGIN AGAIN:
+   - Go to: https://e0e9e5686e91.ngrok-free.app/login/
+   - Login should work now!
+
+3. IF NGROK URL CHANGES:
+   - If you restart ngrok, you'll get a new URL
+   - Update MyApp/settings.py:
+     - Add the new URL to CSRF_TRUSTED_ORIGINS
+     - Restart Django server
+
+EXAMPLE:
+--------
+If new ngrok URL is: https://abc123.ngrok-free.app
+
+Add to settings.py:
+CSRF_TRUSTED_ORIGINS = [
+    "https://abc123.ngrok-free.app",
+    "https://*.ngrok-free.app",
+    ...
+]
+
+========================================
+  YOUR PUBLIC URL IS READY!
+========================================
+
+Share on LinkedIn:
+https://e0e9e5686e91.ngrok-free.app
+
+Login Credentials:
+- Username: Surya
+- Password: 12345678
+
+========================================

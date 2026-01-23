@@ -1,0 +1,56 @@
+========================================
+  PUBLIC URL SETUP FOR LINKEDIN
+========================================
+
+QUICK METHOD (5 minutes):
+------------------------
+
+1. Download ngrok:
+   - Visit: https://ngrok.com/download
+   - Download Windows version
+   - Extract ngrok.exe to C:\ngrok\ (or any folder)
+
+2. Start Django Server:
+   - Open terminal in project folder
+   - Run: python manage.py runserver 8002
+   - Keep this terminal open!
+
+3. Start ngrok (New Terminal):
+   - Open NEW terminal
+   - Go to ngrok folder: cd C:\ngrok
+   - Run: ngrok http 8002
+   - You'll see a URL like: https://abc123.ngrok-free.app
+
+4. Copy the HTTPS URL from ngrok
+   - This is your PUBLIC URL!
+   - Share this on LinkedIn!
+
+5. Settings already updated:
+   - ALLOWED_HOSTS = ["*"] is set
+   - Ready for public access!
+
+
+IMPORTANT NOTES:
+----------------
+- ngrok free URLs expire after 2 hours
+- For permanent URL, use Render.com or Railway.app
+- See DEPLOYMENT_GUIDE.md for permanent hosting
+
+
+LINKEDIN POST:
+--------------
+🚀 Excited to share my latest project - MyBlog!
+
+A full-featured blog platform built with Django:
+✅ Secure authentication
+✅ Content management
+✅ Image upload
+✅ Analytics dashboard
+✅ Responsive design
+
+🔗 Try it: [YOUR NGROK URL HERE]
+
+#Django #Python #WebDevelopment
+
+
+========================================

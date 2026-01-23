@@ -51,6 +51,12 @@ def index(request):
         all_posts = all_posts.filter(category__name=category_name)
         blog_title = f"{category_name} Posts"
 
+    # Calculate statistics for homepage
+    total_posts = Post.objects.filter(is_published=True).count()
+    total_categories = Category.objects.count()
+    total_users = User.objects.count()
+    recent_posts_count = Post.objects.filter(is_published=True).order_by('-created_at')[:5].count()
+
     paginator = Paginator(all_posts, 5)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
@@ -71,7 +77,11 @@ def index(request):
             "paginator": paginator,
             "categories": categories,
             "current_category": category_name,
-            "custom_range": custom_range
+            "custom_range": custom_range,
+            "total_posts": total_posts,
+            "total_categories": total_categories,
+            "total_users": total_users,
+            "recent_posts_count": recent_posts_count,
         }
     )
 
@@ -365,9 +375,35 @@ def reset_password(request, uidb64, token):
 
 
 @login_required
-@permission_required("blog.add_post", raise_exception=True)
 def new_post(request):
     """To get a new_post page"""
+    # Allow superuser, staff, or users with add_post permission
+    # For debugging: check user status
+    user = request.user
+    
+    # Debug info (remove in production)
+    if not user.is_authenticated:
+        from django.contrib.auth import logout
+        logout(request)
+        messages.error(request, "Please log in to create a post.")
+        return redirect("blog:login")
+    
+    # Check permissions - allow superuser, staff, or users with permission
+    has_permission = (
+        user.is_superuser or 
+        user.is_staff or 
+        user.has_perm("blog.add_post") or
+        user.groups.filter(name__in=["Authors", "Editors"]).exists()
+    )
+    
+    if not has_permission:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied(
+            f"You don't have permission to create posts. "
+            f"User: {user.username}, Superuser: {user.is_superuser}, "
+            f"Staff: {user.is_staff}, Has perm: {user.has_perm('blog.add_post')}"
+        )
+    
     categories = Category.objects.all()
     form = PostForm()
     if request.method == "POST":
@@ -377,6 +413,7 @@ def new_post(request):
             post = form.save(commit=False)
             post.user = request.user
             post.save()
+            messages.success(request, "Post created successfully!")
             return redirect("blog:dashboard")
     return render(
         request, "blog/new_post.html", {"categories": categories, "form": form}
