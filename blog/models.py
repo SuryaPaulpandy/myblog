@@ -40,7 +40,8 @@ class Post(models.Model):
     def formatted_img_url(self):
         """Return the image URL, handling both online URLs and uploaded files"""
         if not self.img_url:
-            return "https://via.placeholder.com/800x400?text=No+Image"
+            # Use placeholder with post ID for consistency
+            return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
         
         img_str = str(self.img_url)
         
@@ -48,18 +49,72 @@ class Post(models.Model):
         if img_str.startswith(("http://", "https://")):
             return img_str
         
-        # For uploaded files, return the full URL
+        # For uploaded files, try to construct the URL
         try:
-            # In production (Render), use the media URL
             from django.conf import settings
-            if hasattr(self.img_url, 'url'):
-                return self.img_url.url
+            import os
+            
+            # Get file path
+            if hasattr(self.img_url, 'name'):
+                file_path = self.img_url.name
+            elif hasattr(self.img_url, 'url'):
+                # Try to get URL from ImageField
+                try:
+                    url = self.img_url.url
+                    if url.startswith(('http://', 'https://')):
+                        return url
+                    # Construct absolute URL for production
+                    if not settings.DEBUG:
+                        try:
+                            from django.contrib.sites.models import Site
+                            current_site = Site.objects.get_current()
+                            domain = current_site.domain
+                            if not domain.startswith('http'):
+                                domain = f"https://{domain}"
+                            return f"{domain}{url}"
+                        except:
+                            pass
+                    return url
+                except:
+                    file_path = img_str
             else:
-                # Fallback: construct URL manually
-                return f"{settings.MEDIA_URL}{img_str}"
-        except:
-            # Final fallback
-            return "https://via.placeholder.com/800x400?text=Image+Not+Found"
+                file_path = img_str
+            
+            # Remove leading slash
+            if file_path.startswith('/'):
+                file_path = file_path[1:]
+            
+            # Check if file exists locally
+            full_path = os.path.join(settings.MEDIA_ROOT, file_path) if hasattr(settings, 'MEDIA_ROOT') else None
+            file_exists = full_path and os.path.exists(full_path) if full_path else False
+            
+            # Construct URL
+            media_url = settings.MEDIA_URL
+            if not media_url.endswith('/'):
+                media_url += '/'
+            
+            if file_exists and settings.DEBUG:
+                # File exists in development
+                return f"{media_url}{file_path}"
+            elif not settings.DEBUG:
+                # In production (Render), try absolute URL
+                try:
+                    from django.contrib.sites.models import Site
+                    current_site = Site.objects.get_current()
+                    domain = current_site.domain
+                    if not domain.startswith('http'):
+                        domain = f"https://{domain}"
+                    return f"{domain}{media_url}{file_path}"
+                except:
+                    # Fallback: use placeholder image
+                    return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
+            else:
+                # File doesn't exist, use placeholder
+                return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
+                
+        except Exception as e:
+            # Final fallback - use placeholder with post ID
+            return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
 
     def __str__(self):
         return str(self.title)

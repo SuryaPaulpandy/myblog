@@ -30,8 +30,9 @@ DEBUG = False
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "*.onrender.com",  # Render free tier domain
-    "*",  # Allow all for initial deploy (update with your specific domain later)
+    "myblog-c1lu.onrender.com",  # Your specific Render domain
+    "*.onrender.com",  # Render free tier domain pattern
+    "*",  # Allow all for initial deploy
 ]
 
 # CSRF Trusted Origins - Required for ngrok and public access
