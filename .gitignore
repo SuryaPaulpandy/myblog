@@ -7,7 +7,8 @@ v/
 venv/
 environment/
 
-taticfiles/
+# Commented out for Render deployment (need to commit db.sqlite3 and staticfiles)
+staticfiles/
 __pycache__/
 .sonarlint/
 pylint_report.txt
@@ -21,7 +22,7 @@ server_log.txt
 
 *.log
 
-db.sqlite3
+db.sqlite3  # Commented for Render - need to commit this file
 .env.swp
 
 

@@ -26,7 +26,13 @@ SECRET_KEY = "django-insecure-g3j%()wrxl(3+et^g*6n!5zp@*4ogyrxc+ux&$t3s#f4uu_b(m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "*"]  # "*" allows all hosts for ngrok/public access
+# ALLOWED_HOSTS for Render deployment
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "*.onrender.com",  # Render free tier domain
+    "*",  # Allow all for initial deploy (update with your specific domain later)
+]
 
 # CSRF Trusted Origins - Required for ngrok and public access
 CSRF_TRUSTED_ORIGINS = [
@@ -86,16 +92,25 @@ WSGI_APPLICATION = "MyApp.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# SQLite for Render free tier (no shell access for migrations)
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "blog",
-        "USER": "root",
-        "PASSWORD": "Mysql@2002",
-        "HOST": "localhost",  # Or your IP
-        "PORT": "3306",  # Default MySQL port
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# MySQL configuration (for local development - uncomment if needed)
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "blog",
+#         "USER": "root",
+#         "PASSWORD": "Mysql@2002",
+#         "HOST": "localhost",
+#         "PORT": "3306",
+#     }
+# }
 
 
 # Password validation
