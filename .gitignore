@@ -1,0 +1,45 @@
+.env
+.en/
+.venv/
+v/
+.v/
+.vscode/
+venv/
+environment/
+
+taticfiles/
+__pycache__/
+.sonarlint/
+pylint_report.txt
+.coverage
+coverage.xml
+sonar-project.properties
+.scannerwork
+run.bat
+server_log.txt
+/server_log.txt
+
+*.log
+
+db.sqlite3
+.env.swp
+
+
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
