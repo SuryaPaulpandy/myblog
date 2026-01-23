@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-g3j%()wrxl(3+et^g*6n!5zp@*4ogyrxc+ux&$t3s#f4uu_b(m"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "*"]  # "*" allows all hosts for ngrok/public access
 
@@ -59,6 +59,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "MyApp.middleware.RedirectAuthenticatedUserMiddleware",
     "MyApp.middleware.RestrictUnauthenticatedUserMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "MyApp.urls"
@@ -194,3 +195,8 @@ OTP_EXPIRY_SECONDS = 180  # 3 minutes in seconds
 OTP_RESEND_LIMIT = 3  # Max resend attempts
 
 SESSION_SERIALIZER = "blog.custom_json.CustomJSONSerializer"
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
