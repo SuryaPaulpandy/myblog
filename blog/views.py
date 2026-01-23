@@ -377,32 +377,6 @@ def reset_password(request, uidb64, token):
 @login_required
 def new_post(request):
     """To get a new_post page"""
-    # Allow superuser, staff, or users with add_post permission
-    # For debugging: check user status
-    user = request.user
-    
-    # Debug info (remove in production)
-    if not user.is_authenticated:
-        from django.contrib.auth import logout
-        logout(request)
-        messages.error(request, "Please log in to create a post.")
-        return redirect("blog:login")
-    
-    # Check permissions - allow superuser, staff, or users with permission
-    has_permission = (
-        user.is_superuser or 
-        user.is_staff or 
-        user.has_perm("blog.add_post") or
-        user.groups.filter(name__in=["Authors", "Editors"]).exists()
-    )
-    
-    if not has_permission:
-        from django.core.exceptions import PermissionDenied
-        raise PermissionDenied(
-            f"You don't have permission to create posts. "
-            f"User: {user.username}, Superuser: {user.is_superuser}, "
-            f"Staff: {user.is_staff}, Has perm: {user.has_perm('blog.add_post')}"
-        )
     
     categories = Category.objects.all()
     form = PostForm()
@@ -421,12 +395,19 @@ def new_post(request):
 
 
 @login_required
-@permission_required("blog.change_post", raise_exception=True)
+@login_required
 def edit_post(request, post_id):
     """To get aedit_post views"""
-    categories = Category.objects.all()
     post = get_object_or_404(Post, id=post_id)
-    form = PostForm()
+    
+    # Check ownership
+    if post.user != request.user:
+        messages.error(request, "You are not authorized to edit this post")
+        return redirect("blog:dashboard")
+        
+    categories = Category.objects.all()
+    form = PostForm(instance=post)  # Initialize form with instance for GET request
+    
     if request.method == "POST":
         # form
         form = PostForm(request.POST, request.FILES, instance=post)
@@ -443,20 +424,32 @@ def edit_post(request, post_id):
 
 
 @login_required
-@permission_required("blog.delete_post", raise_exception=True)
+@login_required
 def delete_post(request, post_id):
     """To get a delete_post views"""
     post = get_object_or_404(Post, id=post_id)
+    
+    # Check ownership
+    if post.user != request.user:
+        messages.error(request, "You are not authorized to delete this post")
+        return redirect("blog:dashboard")
+        
     post.delete()
     messages.success(request, "Post Deleted Succesfully!")
     return redirect("blog:dashboard")
 
 
 @login_required
-@permission_required("blog.can_publish", raise_exception=True)
+@login_required
 def publish_post(request, post_id):
     """To get a published_post views"""
     post = get_object_or_404(Post, id=post_id)
+    
+    # Check ownership
+    if post.user != request.user:
+        messages.error(request, "You are not authorized to publish this post")
+        return redirect("blog:dashboard")
+        
     post.is_published = True
     post.save()
     messages.success(request, "Post Published Succesfully!")
