@@ -76,9 +76,7 @@ class PostForm(forms.ModelForm):
 
     def save(self, commit=True):
         post = super().save(commit=False)
-        if not self.cleaned_data.get("img_url") and not post.img_url:
-             pass # logic to keep existing or default handled in view/model
-
+        # Image handling is done in the view
         if commit:
             post.save()
         return post

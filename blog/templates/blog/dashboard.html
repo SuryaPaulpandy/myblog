@@ -177,6 +177,8 @@
                                             <i class="bi bi-calendar3 me-1"></i>{{post.created_at|date:"M d, Y"}}
                                         </small>
                                         <div class="btn-group">
+                                            {% if post.user == user %}
+                                            <!-- Only show edit/delete for post owner -->
                                             <a href="{% url 'blog:edit_post' post_id=post.id %}"
                                                 class="btn btn-sm btn-outline-secondary rounded-start-pill"
                                                 title="Edit">
@@ -192,6 +194,7 @@
                                                 class="btn btn-sm btn-success rounded-end-pill" title="Publish">
                                                 <i class="bi bi-send"></i>
                                             </a>
+                                            {% endif %}
                                             {% endif %}
                                         </div>
                                     </div>

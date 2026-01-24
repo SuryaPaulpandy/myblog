@@ -31,7 +31,8 @@ awesome blog.{% endblock %}
     </div>
 </section>
 
-<!-- Statistics Section -->
+<!-- Statistics Section - Only for Admin Users -->
+{% if show_statistics %}
 <section class="py-4 mb-5">
     <div class="container">
         <div class="row g-4">
@@ -74,72 +75,9 @@ awesome blog.{% endblock %}
         </div>
     </div>
 </section>
+{% endif %}
 
-<!-- Features Section -->
-<section class="py-5 bg-light mb-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold display-5 mb-3">Why Choose MyBlog?</h2>
-            <p class="text-muted lead">Powerful features that make content creation and management effortless</p>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-shield-check fs-1 text-primary"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Secure Authentication</h5>
-                    <p class="text-muted">Dual login system with OTP verification and secure password reset functionality.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-pencil-square fs-1 text-success"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Easy Content Management</h5>
-                    <p class="text-muted">Create, edit, and manage your posts with a beautiful, intuitive interface.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-image fs-1 text-info"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Rich Media Support</h5>
-                    <p class="text-muted">Upload images or use online URLs. Full support for visual content.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-phone fs-1 text-warning"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Fully Responsive</h5>
-                    <p class="text-muted">Beautiful design that works perfectly on desktop, tablet, and mobile devices.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-bookmark-heart fs-1 text-danger"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Save & Organize</h5>
-                    <p class="text-muted">Bookmark your favorite posts and organize content by categories.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-graph-up fs-1 text-primary"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Analytics Dashboard</h5>
-                    <p class="text-muted">Track your posts, views, and engagement with detailed statistics.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+
 
 <!-- Latest Posts Section -->
 <div class="container py-4">
@@ -258,4 +196,70 @@ awesome blog.{% endblock %}
     </div>
     {% endif %}
 </div>
+
+<!-- Features Section -->
+<section class="py-5 bg-light mb-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold display-5 mb-3">Why Choose MyBlog?</h2>
+            <p class="text-muted lead">Powerful features that make content creation and management effortless</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-check fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Secure Authentication</h5>
+                    <p class="text-muted">Dual login system with OTP verification and secure password reset functionality.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-pencil-square fs-1 text-success"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Easy Content Management</h5>
+                    <p class="text-muted">Create, edit, and manage your posts with a beautiful, intuitive interface.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-image fs-1 text-info"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Rich Media Support</h5>
+                    <p class="text-muted">Upload images or use online URLs. Full support for visual content.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-phone fs-1 text-warning"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Fully Responsive</h5>
+                    <p class="text-muted">Beautiful design that works perfectly on desktop, tablet, and mobile devices.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-bookmark-heart fs-1 text-danger"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Save & Organize</h5>
+                    <p class="text-muted">Bookmark your favorite posts and organize content by categories.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-graph-up fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Analytics Dashboard</h5>
+                    <p class="text-muted">Track your posts, views, and engagement with detailed statistics.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

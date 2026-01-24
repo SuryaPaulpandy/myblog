@@ -1,5 +1,6 @@
 """Django Models Modules"""
 
+import hashlib
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.text import slugify
@@ -39,9 +40,38 @@ class Post(models.Model):
     @property
     def formatted_img_url(self):
         """Return the image URL, handling both online URLs and uploaded files"""
+        # Category-based image seeds (base seeds for each category)
+        category_seeds = {
+            "Technology": "tech",
+            "Science": "science",
+            "Art": "art",
+            "Sports": "sports",
+            "Food": "food",
+        }
+        
         if not self.img_url:
-            # Use placeholder with post ID for consistency
-            return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
+            # No image uploaded - generate unique image based on post details
+            # Use combination of: category + post ID + title hash for uniqueness
+            if self.id and self.category:
+                category_name = self.category.name
+                base_seed = category_seeds.get(category_name, "default")
+                
+                # Create unique seed from post ID, title, and category
+                # This ensures no two posts get the same image
+                title_hash = hashlib.md5(self.title.encode()).hexdigest()[:8] if self.title else "00000000"
+                unique_seed = f"{base_seed}_{self.id}_{title_hash}"
+                
+                return f"https://picsum.photos/seed/{unique_seed}/800/600"
+            elif self.category:
+                # Post not saved yet, use category + title hash
+                category_name = self.category.name
+                base_seed = category_seeds.get(category_name, "default")
+                title_hash = hashlib.md5(self.title.encode()).hexdigest()[:8] if self.title else "00000000"
+                unique_seed = f"{base_seed}_{title_hash}"
+                return f"https://picsum.photos/seed/{unique_seed}/800/600"
+            else:
+                # Fallback
+                return f"https://picsum.photos/seed/default_{self.id or 'new'}/800/600"
         
         img_str = str(self.img_url)
         
@@ -58,7 +88,6 @@ class Post(models.Model):
             if hasattr(self.img_url, 'name'):
                 file_path = self.img_url.name
             elif hasattr(self.img_url, 'url'):
-                # Try to get URL from ImageField
                 try:
                     url = self.img_url.url
                     if url.startswith(('http://', 'https://')):
@@ -106,15 +135,33 @@ class Post(models.Model):
                         domain = f"https://{domain}"
                     return f"{domain}{media_url}{file_path}"
                 except:
-                    # Fallback: use placeholder image
-                    return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
+                    # Fallback: use unique category-based image
+                    if self.id and self.category:
+                        category_name = self.category.name
+                        base_seed = category_seeds.get(category_name, "default")
+                        title_hash = hashlib.md5(self.title.encode()).hexdigest()[:8] if self.title else "00000000"
+                        unique_seed = f"{base_seed}_{self.id}_{title_hash}"
+                        return f"https://picsum.photos/seed/{unique_seed}/800/600"
+                    return f"https://picsum.photos/seed/default_{self.id or 'new'}/800/600"
             else:
-                # File doesn't exist, use placeholder
-                return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
+                # File doesn't exist, use unique category-based image
+                if self.id and self.category:
+                    category_name = self.category.name
+                    base_seed = category_seeds.get(category_name, "default")
+                    title_hash = hashlib.md5(self.title.encode()).hexdigest()[:8] if self.title else "00000000"
+                    unique_seed = f"{base_seed}_{self.id}_{title_hash}"
+                    return f"https://picsum.photos/seed/{unique_seed}/800/600"
+                return f"https://picsum.photos/seed/default_{self.id or 'new'}/800/600"
                 
         except Exception as e:
-            # Final fallback - use placeholder with post ID
-            return f"https://picsum.photos/seed/{self.id or 'default'}/800/600"
+            # Final fallback - use unique category-based image
+            if self.id and self.category:
+                category_name = self.category.name
+                base_seed = category_seeds.get(category_name, "default")
+                title_hash = hashlib.md5(self.title.encode()).hexdigest()[:8] if self.title else "00000000"
+                unique_seed = f"{base_seed}_{self.id}_{title_hash}"
+                return f"https://picsum.photos/seed/{unique_seed}/800/600"
+            return f"https://picsum.photos/seed/default_{self.id or 'new'}/800/600"
 
     def __str__(self):
         return str(self.title)

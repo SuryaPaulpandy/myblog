@@ -43,7 +43,7 @@ User = get_user_model()
 def index(request):
     """Display all blog posts on the index page."""
     blog_title = "Latest Posts"
-    all_posts = Post.objects.filter(is_published=True)
+    all_posts = Post.objects.filter(is_published=True).order_by('-created_at')  # Newest first
     categories = Category.objects.all()
 
     category_name = request.GET.get("category")
@@ -213,7 +213,8 @@ def dashboard(request):
     username = request.session.get("username", "Guest")
     is_logged_in = request.session.get("is_logged_in", False)
 
-    all_posts = Post.objects.filter(user=request.user)
+    # Only show posts created by the current user, ordered by newest first
+    all_posts = Post.objects.filter(user=request.user).order_by('-created_at')
 
     # Calculate statistics (before filtering the list)
     total_posts = all_posts.count()
@@ -376,8 +377,8 @@ def reset_password(request, uidb64, token):
 
 @login_required
 def new_post(request):
-    """To get a new_post page"""
-    
+    """To get a new_post page - Available to ALL logged-in users"""
+    # No permission check - any logged-in user can create posts
     categories = Category.objects.all()
     form = PostForm()
     if request.method == "POST":
@@ -386,6 +387,8 @@ def new_post(request):
         if form.is_valid():
             post = form.save(commit=False)
             post.user = request.user
+            # If no image uploaded, img_url will be None
+            # formatted_img_url property will handle category-based default images
             post.save()
             messages.success(request, "Post created successfully!")
             return redirect("blog:dashboard")
