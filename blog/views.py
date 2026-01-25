@@ -387,8 +387,63 @@ def new_post(request):
         if form.is_valid():
             post = form.save(commit=False)
             post.user = request.user
-            # If no image uploaded, img_url will be None
-            # formatted_img_url property will handle category-based default images
+            
+            # Handle image: Priority - Uploaded file > URL input > Default category image
+            image_url_input = form.cleaned_data.get("image_url_input")
+            img_file = form.cleaned_data.get("img_url")
+            
+            if img_file:
+                # User uploaded a file - use it directly, clear online URL
+                post.img_url = img_file
+                post.image_url_online = None  # Clear online URL if file is uploaded
+            elif image_url_input:
+                # User provided URL - validate it's an image and store URL directly (don't download)
+                try:
+                    import urllib.request
+                    
+                    # Validate URL is an image (HEAD request to check content-type)
+                    req_head = urllib.request.Request(image_url_input, method='HEAD')
+                    req_head.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+                    
+                    try:
+                        with urllib.request.urlopen(req_head, timeout=10) as head_response:
+                            content_type = head_response.headers.get('Content-Type', '').lower()
+                            
+                            # Validate it's an image
+                            if not any(img_type in content_type for img_type in ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg']):
+                                # Check if it's a video
+                                if 'video' in content_type:
+                                    messages.error(request, "Please upload correct URL for images only. Videos are not allowed. Allowed formats: JPG, PNG, GIF, WEBP, etc.")
+                                    return render(request, "blog/new_post.html", {"categories": categories, "form": form})
+                                elif 'text/html' in content_type or 'html' in content_type:
+                                    messages.error(request, "This is a webpage URL, not a direct image URL. Please use a direct image URL (e.g., https://example.com/image.jpg). For Freepik images, right-click the image and select 'Copy image address' to get the direct URL.")
+                                    return render(request, "blog/new_post.html", {"categories": categories, "form": form})
+                                else:
+                                    messages.error(request, f"Please upload correct URL for images only. The URL returned: {content_type}. Allowed formats: JPG, PNG, GIF, WEBP, etc. Make sure you're using a direct image URL, not a webpage URL.")
+                                    return render(request, "blog/new_post.html", {"categories": categories, "form": form})
+                    except Exception as e:
+                        # HEAD request failed - check if URL looks like a webpage
+                        if any(domain in image_url_input.lower() for domain in ['freepik.com', 'unsplash.com/photos', 'pexels.com/photo', 'pinterest.com', '.htm', '.html']):
+                            messages.error(request, "This appears to be a webpage URL, not a direct image URL. Please use a direct image URL. Right-click on the image and select 'Copy image address' or 'Copy image URL' to get the direct link.")
+                            return render(request, "blog/new_post.html", {"categories": categories, "form": form})
+                        # Otherwise, accept the URL (might be CORS issues or valid image URL)
+                        pass
+                    
+                    # Store the URL directly (don't download)
+                    post.image_url_online = image_url_input
+                    post.img_url = None  # Clear uploaded file if URL is provided
+                    
+                except urllib.error.HTTPError as e:
+                    messages.error(request, f"Could not access the URL. Error: {e.code} {e.reason}. Please check the URL and try again.")
+                    return render(request, "blog/new_post.html", {"categories": categories, "form": form})
+                except urllib.error.URLError as e:
+                    messages.error(request, f"Invalid URL or network error: {str(e)}. Please check the URL and try again.")
+                    return render(request, "blog/new_post.html", {"categories": categories, "form": form})
+                except Exception as e:
+                    messages.error(request, f"Error validating image URL: {str(e)}. Please check the URL and try again.")
+                    return render(request, "blog/new_post.html", {"categories": categories, "form": form})
+            
+            # Save the post (always save, regardless of image)
             post.save()
             messages.success(request, "Post created successfully!")
             return redirect("blog:dashboard")
@@ -415,7 +470,80 @@ def edit_post(request, post_id):
         # form
         form = PostForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
-            form.save()
+            # Get the updated post instance
+            updated_post = form.save(commit=False)
+            
+            # Handle image updates: Priority - Uploaded file > URL input > Keep existing
+            image_url_input = form.cleaned_data.get("image_url_input")
+            img_file = form.cleaned_data.get("img_url")
+            
+            if img_file:
+                # User uploaded a new file - delete old file first, then save new one
+                # Delete old image file if it exists
+                if post.img_url:
+                    try:
+                        import os
+                        from django.conf import settings
+                        old_file_path = post.img_url.path if hasattr(post.img_url, 'path') else None
+                        if old_file_path and os.path.exists(old_file_path):
+                            os.remove(old_file_path)
+                    except Exception as e:
+                        # If deletion fails, continue anyway
+                        pass
+                
+                # Save new uploaded file
+                updated_post.img_url = img_file
+                updated_post.image_url_online = None  # Clear online URL if file is uploaded
+            elif image_url_input:
+                # User provided new URL - validate it's an image and store URL directly
+                try:
+                    import urllib.request
+                    
+                    # Validate URL is an image (HEAD request to check content-type)
+                    req_head = urllib.request.Request(image_url_input, method='HEAD')
+                    req_head.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+                    
+                    try:
+                        with urllib.request.urlopen(req_head, timeout=10) as head_response:
+                            content_type = head_response.headers.get('Content-Type', '').lower()
+                            
+                            # Validate it's an image
+                            if not any(img_type in content_type for img_type in ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg']):
+                                # Check if it's a video
+                                if 'video' in content_type:
+                                    messages.error(request, "Please upload correct URL for images only. Videos are not allowed. Allowed formats: JPG, PNG, GIF, WEBP, etc.")
+                                    return render(request, "blog/edit_post.html", {"categories": categories, "post": post, "form": form})
+                                elif 'text/html' in content_type or 'html' in content_type:
+                                    messages.error(request, "This is a webpage URL, not a direct image URL. Please use a direct image URL (e.g., https://example.com/image.jpg). For Freepik images, right-click the image and select 'Copy image address' to get the direct URL.")
+                                    return render(request, "blog/edit_post.html", {"categories": categories, "post": post, "form": form})
+                                else:
+                                    messages.error(request, f"Please upload correct URL for images only. The URL returned: {content_type}. Allowed formats: JPG, PNG, GIF, WEBP, etc. Make sure you're using a direct image URL, not a webpage URL.")
+                                    return render(request, "blog/edit_post.html", {"categories": categories, "post": post, "form": form})
+                    except Exception as e:
+                        # HEAD request failed - check if URL looks like a webpage
+                        if any(domain in image_url_input.lower() for domain in ['freepik.com', 'unsplash.com/photos', 'pexels.com/photo', 'pinterest.com', '.htm', '.html']):
+                            messages.error(request, "This appears to be a webpage URL, not a direct image URL. Please use a direct image URL. Right-click on the image and select 'Copy image address' or 'Copy image URL' to get the direct link.")
+                            return render(request, "blog/edit_post.html", {"categories": categories, "post": post, "form": form})
+                        # Otherwise, accept the URL (might be CORS issues or valid image URL)
+                        pass
+                    
+                    # Store the new URL directly (don't download)
+                    updated_post.image_url_online = image_url_input
+                    updated_post.img_url = None  # Clear uploaded file if URL is provided
+                    
+                except urllib.error.HTTPError as e:
+                    messages.error(request, f"Could not access the URL. Error: {e.code} {e.reason}. Please check the URL and try again.")
+                    return render(request, "blog/edit_post.html", {"categories": categories, "post": post, "form": form})
+                except urllib.error.URLError as e:
+                    messages.error(request, f"Invalid URL or network error: {str(e)}. Please check the URL and try again.")
+                    return render(request, "blog/edit_post.html", {"categories": categories, "post": post, "form": form})
+                except Exception as e:
+                    messages.error(request, f"Error validating image URL: {str(e)}. Please check the URL and try again.")
+                    return render(request, "blog/edit_post.html", {"categories": categories, "post": post, "form": form})
+            # If no new image provided, keep existing image (don't change it)
+            
+            # Save the updated post
+            updated_post.save()
             messages.success(request, "Post Updated Succesfully!")
             return redirect("blog:dashboard")
 

@@ -23,33 +23,62 @@
                         {% csrf_token %}
 
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" name="title" id="title"
-                                placeholder="Enter post title" required>
-                            <label for="title">Post Title</label>
+                            {{ form.title }}
+                            <label for="id_title">Post Title</label>
+                            {% if form.title.errors %}
+                                <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                            {% endif %}
                         </div>
 
                         <div class="form-floating mb-3">
-                            <select class="form-select" id="category" name="category" required>
-                                <option value="" selected disabled>Select a category</option>
-                                {% if categories %}
-                                {% for category in categories %}
-                                <option value="{{category.id}}">{{category.name}}</option>
-                                {% endfor %}
-                                {% endif %}
-                            </select>
-                            <label for="category">Category</label>
+                            {{ form.category }}
+                            <label for="id_category">Category</label>
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">{{ form.category.errors }}</div>
+                            {% endif %}
                         </div>
 
                         <div class="mb-3">
-                            <label for="content" class="form-label text-muted ms-1 small fw-bold">CONTENT</label>
-                            <textarea class="form-control" id="content" name="content" rows="10"
-                                placeholder="Write something amazing..." style="min-height: 200px;"></textarea>
+                            <label for="id_content" class="form-label text-muted ms-1 small fw-bold">CONTENT</label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                                <div class="text-danger small mt-1">{{ form.content.errors }}</div>
+                            {% endif %}
                         </div>
 
                         <div class="mb-4">
-                            <label for="img_url" class="form-label text-muted ms-1 small fw-bold">COVER IMAGE</label>
-                            <input type="file" class="form-control" name="img_url" id="img_url">
-                            <div class="form-text">Choose a visually appealing cover image for your post.</div>
+                            <label class="form-label text-muted ms-1 small fw-bold">COVER IMAGE</label>
+                            
+                            <!-- Option 1: Upload Image File -->
+                            <div class="mb-3">
+                                <label for="img_url" class="form-label small">Upload Image File</label>
+                                <input type="file" class="form-control" name="img_url" id="img_url" accept="image/*">
+                                <div class="form-text">Upload any image format (JPG, PNG, GIF, WEBP, etc.) from your computer</div>
+                            </div>
+                            
+                            <!-- Divider: OR -->
+                            <div class="text-center my-3">
+                                <span class="text-muted small fw-bold">OR</span>
+                            </div>
+                            
+                            <!-- Option 2: Enter Image URL -->
+                            <div class="mb-3">
+                                <label for="id_image_url_input" class="form-label small">Enter Image URL</label>
+                                {{ form.image_url_input }}
+                                {% if form.image_url_input.errors %}
+                                    <div class="text-danger small mt-1">{{ form.image_url_input.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <strong>Important:</strong> Use a <strong>direct image URL</strong> (e.g., https://example.com/image.jpg), not a webpage URL.
+                                    <br>For Freepik/Pexels/Unsplash: Right-click the image → "Copy image address" to get the direct URL.
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info small mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Note:</strong> You can either upload an image file OR enter an image URL. 
+                                If you provide both, the uploaded file will be used. If neither is provided, a category-based default image will be used.
+                            </div>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2 pt-3 border-top">

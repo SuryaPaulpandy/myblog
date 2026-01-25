@@ -51,17 +51,79 @@ class ResetPasswordForm(forms.Form):
 class PostForm(forms.ModelForm):
     """This is a NewPostForm"""
 
-    title = forms.CharField(label="Title", max_length=200, required=True, widget=forms.TextInput(attrs={"class": "form-control"}))
-    content = forms.CharField(label="Content", required=True, widget=forms.Textarea(attrs={"class": "form-control", "rows": 5}))
-    category = forms.ModelChoiceField(
-        label="Category", required=True, queryset=Category.objects.all(), widget=forms.Select(attrs={"class": "form-select"})
+    title = forms.CharField(
+        label="Title", 
+        max_length=200, 
+        required=True, 
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "id": "id_title",
+            "placeholder": "Enter post title"
+        })
     )
-    img_url = forms.ImageField(label="Image", required=False, widget=forms.FileInput(attrs={"class": "form-control"}))
+    content = forms.CharField(
+        label="Content", 
+        required=True, 
+        widget=forms.Textarea(attrs={
+            "class": "form-control", 
+            "rows": 10,
+            "id": "id_content",
+            "placeholder": "Write something amazing...",
+            "style": "min-height: 200px;"
+        })
+    )
+    category = forms.ModelChoiceField(
+        label="Category", 
+        required=True, 
+        queryset=Category.objects.all(), 
+        widget=forms.Select(attrs={
+            "class": "form-select",
+            "id": "id_category"
+        })
+    )
+    img_url = forms.ImageField(label="Upload Image", required=False, widget=forms.FileInput(attrs={"class": "form-control"}))
+    image_url_input = forms.URLField(
+        label="Or Enter Image URL", 
+        required=False, 
+        widget=forms.URLInput(attrs={
+            "class": "form-control", 
+            "placeholder": "https://picsum.photos/200/300.webp"
+        }),
+        help_text="Enter any online image URL (supports JPG, PNG, GIF, WEBP, etc.)"
+    )
 
     class Meta:
         model = Post
         fields = ["title", "content", "category", "img_url"]
 
+    def clean_image_url_input(self):
+        """Validate that the URL is actually an image"""
+        image_url = self.cleaned_data.get("image_url_input")
+        
+        if not image_url:
+            return image_url
+        
+        # Check if URL looks like an image (has image extension or we'll check content-type in view)
+        import re
+        from urllib.parse import urlparse
+        
+        parsed_url = urlparse(image_url)
+        path = parsed_url.path.lower()
+        
+        # Common image extensions
+        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.ico']
+        
+        # Check if URL has image extension (even with query parameters)
+        has_image_extension = any(path.endswith(ext) for ext in image_extensions)
+        
+        # If no extension, we'll check content-type in the view
+        # For now, just validate it's a valid URL format
+        if not has_image_extension:
+            # Still allow it - we'll validate content-type in view
+            pass
+        
+        return image_url
+    
     def clean(self):
         cleaned_data = super().clean()
         title = cleaned_data.get("title")
@@ -73,6 +135,8 @@ class PostForm(forms.ModelForm):
 
         if content and len(content) < 10:
             raise forms.ValidationError("Content must be at least 10 Characters long.")
+        
+        return cleaned_data
 
     def save(self, commit=True):
         post = super().save(commit=False)

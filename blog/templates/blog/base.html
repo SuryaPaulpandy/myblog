@@ -110,6 +110,36 @@
                 icon.classList.add("bi-eye-slash");
             }
         }
+
+        // Fix Bootstrap tabs - ensure they work immediately on click
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tabs properly
+            const triggerTabList = document.querySelectorAll('#pills-tab button[data-bs-toggle="tab"]');
+            triggerTabList.forEach(function (triggerEl) {
+                triggerEl.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    // Remove active class from all tabs
+                    document.querySelectorAll('#pills-tab .nav-link').forEach(function(link) {
+                        link.classList.remove('active');
+                        link.setAttribute('aria-selected', 'false');
+                    });
+                    // Hide all tab panes
+                    document.querySelectorAll('.tab-pane').forEach(function(pane) {
+                        pane.classList.remove('show', 'active');
+                    });
+                    // Add active class to clicked tab
+                    triggerEl.classList.add('active');
+                    triggerEl.setAttribute('aria-selected', 'true');
+                    // Show corresponding tab pane
+                    const targetId = triggerEl.getAttribute('data-bs-target');
+                    const targetPane = document.querySelector(targetId);
+                    if (targetPane) {
+                        targetPane.classList.add('show', 'active');
+                    }
+                });
+            });
+        });
     </script>
 </body>
 
